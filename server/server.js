@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
+const swaggerJSDoc = require('swagger-jsdoc');
 const { ObjectID } = require('mongodb');
 
 const { mongoose } = require('./db/mongoose');
@@ -9,6 +10,23 @@ const { User } = require('./models/user');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const swaggerDefinition = {
+  info: {
+    title: 'Node Swagger API',
+    version: '1.0.0',
+    description: 'RESTful API with Swagger'
+  },
+  host: 'https://vast-shore-36257.herokuapp.com',
+  basePath: '/',
+};
+
+const options = {
+  swaggerDefinition: swaggerDefinition,
+  apis: ['./server/server.js'],
+};
+
+const swaggerSpec = swaggerJSDoc(options);
 
 app.all('*', function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -24,7 +42,49 @@ app.all('*', function(req, res, next) {
 });
 
 app.use(bodyParser.json());
+app.use(express.static('public'));
 
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+/**
+ * @swagger
+ * definition:
+ *   Todo:
+ *     properties:
+ *       text:
+ *         type: string
+ *   Patch:
+ *     properties:
+ *       text:
+ *         type: string
+ *       completed: 
+ *         type: boolean
+ */
+
+
+/**
+ * @swagger
+ * /todos:
+ *   post:
+ *     tags:
+ *       - Todos
+ *     description: Creates a new todo
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: todo
+ *         description: Todo object
+ *         in: body
+ *         required: true
+ *         schema:
+ *           $ref: '#/definitions/Todo'
+ *     responses:
+ *       200:
+ *         description: Sucessfully created
+ */
 app.post('/todos', (req, res) => {
   const todo = new Todo({
     text: req.body.text
@@ -37,6 +97,21 @@ app.post('/todos', (req, res) => {
   })
 });
 
+/**
+ * @swagger
+ * /todos:
+ *   get:
+ *     tags:
+ *       - Todos
+ *     description: Returns all todos
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: An array of todos
+ *         schema:
+ *           $ref: '#/definitions/Todo'
+ */
 app.get('/todos', (req, res) => {
   Todo.find().then((todos) => {
     res.send({todos});
@@ -45,6 +120,27 @@ app.get('/todos', (req, res) => {
   })
 });
 
+/**
+ * @swagger
+ * /todos/{id}:
+ *   get:
+ *     tags:
+ *       - Todos
+ *     description: Returns a single todo
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: id
+ *         description: Todo's id
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: A single todo
+ *         schema:
+ *           $ref: '#/definitions/Todo'
+ */
 app.get('/todos/:id', (req, res) => {
   const id = req.params.id;
 
@@ -64,6 +160,25 @@ app.get('/todos/:id', (req, res) => {
 
 });
 
+/**
+ * @swagger
+ * /todos/{id}:
+ *   delete:
+ *     tags:
+ *       - Todos
+ *     description: Deletes a single todo
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: id
+ *         description: Todo's id
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: Sucessfully deleted
+ */
 app.delete('/todos/:id', (req, res) => {
   const id = req.params.id;
 
@@ -82,6 +197,31 @@ app.delete('/todos/:id', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /todos/{id}:
+ *   patch:
+ *     tags:
+ *       - Todos
+ *     description: Updates a single todo
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: id
+ *         description: Todo's id
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: todo
+ *         description: Todo object
+ *         in: body
+ *         required: true
+ *         schema:
+ *           $ref: '#/definitions/Patch'
+ *     responses:
+ *       200:
+ *         description: Sucessfully updated
+ */
 app.patch('/todos/:id', (req, res) => {
   const id = req.params.id;
   const body = _.pick(req.body, ['text', 'completed']);
