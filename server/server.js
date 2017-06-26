@@ -56,12 +56,15 @@ app.get('/swagger.json', (req, res) => {
  *     properties:
  *       text:
  *         type: string
+ *         example: Do something...
  *   Patch:
  *     properties:
  *       text:
  *         type: string
+ *         example: Do something else...
  *       completed: 
  *         type: boolean
+ *         example: true
  */
 
 
